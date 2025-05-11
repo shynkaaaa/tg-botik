@@ -8,20 +8,16 @@ from config.keyboards import get_inline_keyboard
 from utils.metro_parser import parse_schedule
 router = Router()
 
-user_data = {}
-
-COOLDOWN_TIME = 5
-
 @router.message(Command("schedule"))
 async def cmd_schedule(message: types.Message):
     await message.answer(
         "Выберите станцию или общее расписание:",
-        reply_markup=get_inline_keyboard()
+        reply_markup=get_inline_keyboard(message.from_user.id)
     )
 
 @router.callback_query()
 async def handle_callback(callback: types.CallbackQuery):
-    data = callback.data 
+    data = callback.data.split(":")[0]
     schedule = parse_schedule()
     response = "Расписание метро:\n\n"
 

@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-def get_inline_keyboard():
+def get_inline_keyboard(user_id: int):
     stations = [
         ("Райымбек батыра", 0),
         ("Жибек жолы", 1),
@@ -19,8 +19,8 @@ def get_inline_keyboard():
     
     for station, id_ in stations:
         if station == "Общее расписание🕰️":
-            buttons.append([InlineKeyboardButton(text=station, callback_data="general_schedule")])
+            buttons.append([InlineKeyboardButton(text=station, callback_data=f"general_schedule:{user_id}")])
         else:
-            buttons.append([InlineKeyboardButton(text=station, callback_data=f"station_{id_}")])
+            buttons.append([InlineKeyboardButton(text=station, callback_data=f"station_{id_}:{user_id}")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
