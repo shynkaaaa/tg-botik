@@ -18,8 +18,8 @@ bot = Bot(
 
 dp = Dispatcher()
 dp.message.middleware(AntiSpamMiddleware())
-dp.callback_query.middleware(AntiSpamMiddleware())
 dp.callback_query.middleware(CheckOwnerMiddleware())
+dp.callback_query.middleware(AntiSpamMiddleware())
 
 register_start_handlers(dp)
 register_schedule_handlers(dp)
