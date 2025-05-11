@@ -7,7 +7,8 @@ from typing import Callable, Dict, Any, Awaitable, Union
 COOLDOWN_SECONDS = 10  # Время между действиями
 
 # Временные метки пользователей
-user_timestamps: Dict[int, float] = {}
+user_timestamps_message: Dict[int, float] = {}
+user_timestamps_callback: Dict[int, float] = {}
 
 class AntiSpamMiddleware(BaseMiddleware):
     async def __call__(
@@ -19,8 +20,10 @@ class AntiSpamMiddleware(BaseMiddleware):
         # Получаем ID пользователя
         user_id = event.from_user.id
         now = time.time()
-
-        last_time = user_timestamps.get(user_id)
+        if isinstance(event, Message):
+            last_time = user_timestamps_message.get(user_id) 
+        elif isinstance(event, CallbackQuery):
+            last_time = user_timestamps_callback.get(user_id) 
         if last_time and now - last_time < COOLDOWN_SECONDS:
             remaining = int(COOLDOWN_SECONDS - (now - last_time))
             # Ответ зависит от типа события
@@ -31,5 +34,8 @@ class AntiSpamMiddleware(BaseMiddleware):
             return  # Блокируем
 
         # Обновляем время
-        user_timestamps[user_id] = now
+        if isinstance(event, Message):
+            user_timestamps_message[user_id] = now
+        elif isinstance(event, CallbackQuery):
+            user_timestamps_callback[user_id] = now
         return await handler(event, data)
