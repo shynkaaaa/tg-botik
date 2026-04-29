@@ -18,7 +18,7 @@ class CheckOwnerMiddleware(BaseMiddleware):
             try:
                 owner_id = int(owner_id_str)
                 if owner_id != user_id:
-                    await event.answer("Это не твоя кнопка ДУРА!", show_alert=True)
+                    await event.answer("Это не твоя кнопка амбас!", show_alert=True)
                     return  # Блокируем
             except ValueError:
                 pass  # fallback — невалидный формат, пропускаем

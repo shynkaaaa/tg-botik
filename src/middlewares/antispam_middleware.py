@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 from typing import Callable, Dict, Any, Awaitable, Union
 
 # Настройки антиспама
-COOLDOWN_SECONDS = 10  # Время между действиями
+COOLDOWN_SECONDS = 5  # Время между действиями
 
 # Временные метки пользователей
 user_timestamps_message: Dict[int, float] = {}
