@@ -14,10 +14,20 @@ logging.basicConfig(level=logging.INFO)
 
 bot = Bot(
     token=Config.BOT_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    default=DefaultBotProperties(
+        parse_mode=ParseMode.HTML,
+        link_preview_is_disabled=True,
+    )
 )
 
 dp = Dispatcher()
+
+
+async def discard_pending_updates(bot: Bot) -> None:
+    await bot.delete_webhook(drop_pending_updates=True)
+
+
+dp.startup.register(discard_pending_updates)
 dp.message.middleware(AntiSpamMiddleware())
 dp.callback_query.middleware(CheckOwnerMiddleware())
 dp.callback_query.middleware(AntiSpamMiddleware())

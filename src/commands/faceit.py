@@ -69,12 +69,11 @@ def _format_int(value: Optional[int]) -> str:
     return str(value)
 
 
-def _build_recent_page(
-    header: str,
+def _build_recent_section(
     limit: int,
     stats: Dict[str, Any],
 ) -> str:
-    lines = [header, f"Последние {limit} матчей:"]
+    lines = [f"<b>Последние {limit} матчей</b>"]
     matches = stats.get("matches", 0)
     skipped = stats.get("skipped", 0)
     if matches == 0:
@@ -152,11 +151,10 @@ def _build_recent_page(
     return "\n".join(lines)
 
 
-def _build_lifetime_page(
-    header: str,
+def _build_lifetime_section(
     lifetime: Optional[Dict[str, Any]],
 ) -> str:
-    lines = [header, "Lifetime:"]
+    lines = ["<b>За всё время</b>"]
     if not lifetime:
         lines.append("Нет данных по lifetime.")
         return "\n".join(lines)
@@ -198,7 +196,7 @@ def _build_lifetime_page(
     return "\n".join(lines)
 
 
-def _build_faceit_pages(nickname: str, profile_url: str) -> List[str]:
+def _build_faceit_message(nickname: str, profile_url: str) -> str:
     player_data = fetch_player_data(nickname, Config.FACEIT_API_KEY)
     player_id = player_data.get("player_id")
     if not player_id:
@@ -213,7 +211,7 @@ def _build_faceit_pages(nickname: str, profile_url: str) -> List[str]:
         elo, level = game_stats
         header = f"{header} | {elo} elo (lvl {level})"
 
-    pages: List[str] = []
+    sections: List[str] = []
     for limit in RECENT_LIMITS:
         recent = build_recent_stats(
             player_id,
@@ -221,7 +219,7 @@ def _build_faceit_pages(nickname: str, profile_url: str) -> List[str]:
             Config.FACEIT_API_KEY,
             limit,
         )
-        pages.append(_build_recent_page(header, limit, recent))
+        sections.append(_build_recent_section(limit, recent))
 
     lifetime_data = fetch_player_game_stats(
         player_id,
@@ -229,9 +227,9 @@ def _build_faceit_pages(nickname: str, profile_url: str) -> List[str]:
         Config.FACEIT_API_KEY,
     )
     lifetime = lifetime_data.get("lifetime") if isinstance(lifetime_data, dict) else None
-    pages.append(_build_lifetime_page(header, lifetime))
+    sections.append(_build_lifetime_section(lifetime))
 
-    return pages
+    return header + "\n\n" + "\n\n──────────\n\n".join(sections)
 
 
 async def _safe_delete(message: Message) -> None:
@@ -348,7 +346,7 @@ async def cmd_faceit_me(message: Message) -> None:
     )
 
     try:
-        pages = await asyncio.to_thread(_build_faceit_pages, nickname, profile_url)
+        response = await asyncio.to_thread(_build_faceit_message, nickname, profile_url)
     except FaceitApiError as exc:
         await _safe_delete(wait_message)
         if exc.status_code == 404:
@@ -371,9 +369,7 @@ async def cmd_faceit_me(message: Message) -> None:
         await message.answer("Ошибка при запросе Faceit API.")
         return
 
-    await _safe_delete(wait_message)
-    for page in pages:
-        await message.answer(page)
+    await wait_message.edit_text(response)
 
 
 def register_faceit_handlers(dp) -> None:
