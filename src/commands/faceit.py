@@ -1,6 +1,9 @@
 import asyncio
 import html
-from typing import Any, Dict, List, Optional, Tuple
+import math
+import time
+from functools import wraps
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -21,6 +24,36 @@ from utils.faceit_api import (
 router = Router()
 
 RECENT_LIMITS = (10, 30)
+SUCCESS_COOLDOWN_SECONDS = 60
+ERROR_COOLDOWN_SECONDS = 5
+_cooldown_until: Dict[int, float] = {}
+_requests_in_progress: set[int] = set()
+
+
+def _with_faceit_cooldown(
+    handler: Callable[[Message], Awaitable[Optional[bool]]],
+) -> Callable[[Message], Awaitable[None]]:
+    @wraps(handler)
+    async def wrapped(message: Message) -> None:
+        user_id = message.from_user.id
+        remaining = _cooldown_until.get(user_id, 0) - time.monotonic()
+        if remaining > 0:
+            await message.answer(f"Подожди ещё {math.ceil(remaining)} сек. перед запросом FACEIT.")
+            return
+        if user_id in _requests_in_progress:
+            await message.answer("Запрос FACEIT уже выполняется.")
+            return
+
+        _requests_in_progress.add(user_id)
+        succeeded = False
+        try:
+            succeeded = bool(await handler(message))
+        finally:
+            _requests_in_progress.discard(user_id)
+            delay = SUCCESS_COOLDOWN_SECONDS if succeeded else ERROR_COOLDOWN_SECONDS
+            _cooldown_until[user_id] = time.monotonic() + delay
+
+    return wrapped
 
 
 def _load_accounts_safe() -> Dict[str, Any]:
@@ -240,7 +273,8 @@ async def _safe_delete(message: Message) -> None:
 
 
 @router.message(Command("faceit_top"))
-async def cmd_faceit_top(message: Message) -> None:
+@_with_faceit_cooldown
+async def cmd_faceit_top(message: Message) -> Optional[bool]:
     try:
         accounts = _load_accounts_safe()
     except FileNotFoundError:
@@ -311,10 +345,12 @@ async def cmd_faceit_top(message: Message) -> None:
         lines.append("Пропущены (нет данных/не найдено): " + ", ".join(skipped))
 
     await message.answer("\n".join(lines))
+    return True
 
 
 @router.message(Command("faceit_me"))
-async def cmd_faceit_me(message: Message) -> None:
+@_with_faceit_cooldown
+async def cmd_faceit_me(message: Message) -> Optional[bool]:
     try:
         accounts = _load_accounts_safe()
     except FileNotFoundError:
@@ -370,6 +406,7 @@ async def cmd_faceit_me(message: Message) -> None:
         return
 
     await wait_message.edit_text(response)
+    return True
 
 
 def register_faceit_handlers(dp) -> None:
