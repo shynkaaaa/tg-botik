@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
-FACEIT_PROFILE_BASE_URL = "https://www.faceit.com/en/players"
+FACEIT_PROFILE_BASE_URL = "https://www.faceit.com/ru/players"
 FACEIT_API_BASE_URL = "https://open.faceit.com/data/v4"
 
 
