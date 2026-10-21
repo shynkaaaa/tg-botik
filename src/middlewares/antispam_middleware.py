@@ -17,6 +17,11 @@ class AntiSpamMiddleware(BaseMiddleware):
         event: Union[Message, CallbackQuery],
         data: Dict[str, Any]
     ) -> Any:
+        if isinstance(event, Message) and event.text:
+            command = event.text.split(maxsplit=1)[0].partition("@")[0]
+            if command in ("/faceit_me", "/faceit_top"):
+                return await handler(event, data)
+
         # Получаем ID пользователя
         user_id = event.from_user.id
         now = time.time()

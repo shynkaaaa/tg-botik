@@ -26,7 +26,7 @@ router = Router()
 RECENT_LIMITS = (10, 30)
 SUCCESS_COOLDOWN_SECONDS = 60
 ERROR_COOLDOWN_SECONDS = 5
-_cooldown_until: Dict[int, float] = {}
+_cooldown_until: Dict[Tuple[int, str], float] = {}
 _requests_in_progress: set[int] = set()
 
 
@@ -36,7 +36,8 @@ def _with_faceit_cooldown(
     @wraps(handler)
     async def wrapped(message: Message) -> None:
         user_id = message.from_user.id
-        remaining = _cooldown_until.get(user_id, 0) - time.monotonic()
+        cooldown_key = (user_id, handler.__name__)
+        remaining = _cooldown_until.get(cooldown_key, 0) - time.monotonic()
         if remaining > 0:
             await message.answer(f"Подожди ещё {math.ceil(remaining)} сек. перед запросом FACEIT.")
             return
@@ -51,7 +52,7 @@ def _with_faceit_cooldown(
         finally:
             _requests_in_progress.discard(user_id)
             delay = SUCCESS_COOLDOWN_SECONDS if succeeded else ERROR_COOLDOWN_SECONDS
-            _cooldown_until[user_id] = time.monotonic() + delay
+            _cooldown_until[cooldown_key] = time.monotonic() + delay
 
     return wrapped
 
