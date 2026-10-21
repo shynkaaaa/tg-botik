@@ -49,4 +49,20 @@ uv run --locked python src/app.py
 
 Для команд со списком аккаунтов FACEIT загрузите `faceit_accounts.json` через вкладку **Files** в папку `data/` корня развертывания. Эта папка исключена из Git. При [повторной синхронизации с GitHub](https://bot-hosting.net/docs/guides/clone-a-github-repository) выберите **Merge**, чтобы сохранить загруженный файл. Не загружайте `.env` с реальными ключами; пример переменных — `.env.example`.
 
+Содержимое `data/faceit_accounts.json`:
+
+```json
+{
+  "accounts": {
+    "123456789": "PlayerOne",
+    "987654321": {
+      "nickname": "PlayerTwo",
+      "profile_url": "https://www.faceit.com/en/players/PlayerTwo"
+    }
+  }
+}
+```
+
+Замените числовые ключи на Telegram ID пользователей, а `PlayerOne` и `PlayerTwo` — на их ники FACEIT. `/faceit_me` ищет запись по Telegram ID отправителя; `/faceit_top` использует все записи. Можно указать только ник: ссылку на профиль бот составит сам. JSON должен быть без комментариев и лишних запятых. `FACEIT_API_KEY` храните отдельно во вкладке **Environment**, не в этом файле.
+
 Перед запуском остановите прежний экземпляр бота с тем же токеном. Затем запустите развертывание и проверьте вывод во вкладке **Console**. На [тарифе Free](https://bot-hosting.net/ru/pricing) доступны 256 МБ RAM, 25% CPU, 512 МБ хранилища и одно развертывание. Режима сна нет, но бесплатный тариф необходимо [продлевать вручную каждые четыре дня](https://bot-hosting.net/docs/faqs-and-information/billing-and-payments); следите также за потреблением памяти в панели.
